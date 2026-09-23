@@ -17,7 +17,6 @@ const CHALLENGE_TIME = 20;
 const START_BALANCE = 500;
 const MAX_BET = 500;
 const MIN_BET = 50;
-const BET_STEP = 50;
 
 const CATEGORIES = {
   football: 'كرة القدم',
@@ -138,6 +137,9 @@ function sanitize(str, max = 30) {
 }
 
 function publicRoom(room) {
+  // ✅ السؤال بيظهر بس في المراحل اللي المفروض يبان فيها (مش في المراهنة)
+  const questionVisible = ['answering', 'challenge', 'scoring', 'reveal'].includes(room.phase);
+
   return {
     code: room.code,
     status: room.status,
@@ -150,16 +152,20 @@ function publicRoom(room) {
     phase: room.phase,
     currentQuestion: room.currentQuestion ? {
       category: room.currentQuestion.category,
-      question: room.phase === 'reveal' || room.phase === 'scoring' ? room.currentQuestion.question : null
+      question: questionVisible ? room.currentQuestion.question : null
     } : null,
-    bets: room.betsPublic(),
-    challenges: room.challengesPublic(),
+    bets: Object.values(room.players).map(p => ({
+      id: p.id, name: p.name, bet: p.bet, hasAnswered: !!(p.answer && p.answer.trim())
+    })),
+    challenges: Object.values(room.players)
+      .filter(p => p.challengeTarget)
+      .map(p => ({ id: p.id, name: p.name, target: p.challengeTarget, amount: p.challengeAmount })),
     pot: room.currentPot,
     betTimeLeft: room.betTimeLeft,
     challengeTimeLeft: room.challengeTimeLeft,
-    roundResults: room.lastRoundResults || null,
+    lastRoundResults: room.lastRoundResults || null,
     winner: room.winner || null,
-    askedQuestions: room.askedQuestions.slice(-20)
+    messages: room.messages ? room.messages.slice(-60) : []
   };
 }
 
@@ -185,14 +191,13 @@ function beginRound(room) {
   room.currentPot = 0;
   room.lastRoundResults = null;
 
-  // reset per-round player state
   Object.values(room.players).forEach(p => {
     p.bet = 0;
     p.answer = '';
     p.correct = null;
     p.challengeTarget = null;
     p.challengeAmount = 0;
-    p.challengeAccepted = false;
+    p.betConfirmed = false;
   });
 
   broadcast(room);
@@ -218,28 +223,27 @@ function clearBetTimer(room) {
 }
 
 function endBettingPhase(room) {
-  // any player who didn't bet, set to 0
   Object.values(room.players).forEach(p => {
     if (p.eliminated) return;
     if (!p.bet || p.bet < 0) p.bet = 0;
   });
 
-  room.phase = 'answering';
   room.currentPot = Object.values(room.players)
     .filter(p => !p.eliminated)
     .reduce((sum, p) => sum + p.bet, 0);
 
-  // deduct bets from balance temporarily
+  // deduct bets from balance temporarily (they'll be refunded if correct)
   Object.values(room.players).forEach(p => {
     if (p.eliminated) return;
     p.balance -= p.bet;
   });
 
+  room.phase = 'answering';
   broadcast(room);
 }
 
-async function endAnsweringPhase(room) {
-  // Judge each answer via AI
+function endAnsweringPhase(room) {
+  if (room.phase !== 'answering') return;
   room.phase = 'challenge';
   room.challengeTimeLeft = CHALLENGE_TIME;
   broadcast(room);
@@ -266,11 +270,12 @@ function clearChallengeTimer(room) {
 
 async function resolveScoring(room) {
   clearChallengeTimer(room);
+  if (room.phase !== 'challenge') return;
   room.phase = 'scoring';
   broadcast(room);
 
-  // judge answers
   const players = Object.values(room.players).filter(p => !p.eliminated);
+
   for (const p of players) {
     if (!p.answer || p.answer.trim().length === 0) {
       p.correct = false;
@@ -282,7 +287,6 @@ async function resolveScoring(room) {
   const winners = players.filter(p => p.correct && p.bet > 0);
   const results = [];
 
-  // distribute pot
   if (winners.length > 0) {
     const totalBet = winners.reduce((s, p) => s + p.bet, 0);
     winners.forEach(p => {
@@ -292,7 +296,6 @@ async function resolveScoring(room) {
     });
     room.currentPot = 0;
   } else {
-    // no winner — pot carries over (stays in room.currentPot for next round)
     players.forEach(p => {
       if (p.bet > 0) {
         results.push({ id: p.id, name: p.name, got: 0, bet: p.bet, correct: false });
@@ -305,21 +308,18 @@ async function resolveScoring(room) {
     if (!challenger.challengeTarget) return;
     const target = room.players[challenger.challengeTarget];
     if (!target || target.eliminated) return;
-    const amount = Math.min(challenger.challengeAmount, challenger.balance);
+    const amount = Math.min(challenger.challengeAmount, Math.max(0, challenger.balance));
     if (amount <= 0) return;
 
     if (target.correct) {
-      // challenger was wrong — pays target
       challenger.balance -= amount;
       target.balance += amount;
     } else {
-      // target was wrong — pays challenger
       target.balance -= amount;
       challenger.balance += amount;
     }
   });
 
-  // reveal correct answer
   room.lastRoundResults = {
     correctAnswer: room.currentQuestion.answer,
     results,
@@ -331,23 +331,24 @@ async function resolveScoring(room) {
     }))
   };
 
-  room.phase = 'reveal';
-  broadcast(room);
-
   // check eliminations
-  const eliminated = players.filter(p => p.balance <= 0);
-  eliminated.forEach(p => { p.eliminated = true; p.balance = 0; });
+  players.forEach(p => {
+    if (p.balance <= 0) { p.balance = 0; p.eliminated = true; }
+  });
 
   const remaining = Object.values(room.players).filter(p => !p.eliminated);
 
   if (remaining.length <= 1) {
     room.winner = remaining[0]?.name || 'لا أحد';
     room.status = 'ended';
+    room.phase = 'reveal';
     broadcast(room);
     return;
   }
 
-  // next round after 8 seconds
+  room.phase = 'reveal';
+  broadcast(room);
+
   setTimeout(() => {
     if (room.status !== 'playing') return;
     room.round++;
@@ -395,24 +396,15 @@ io.on('connection', (socket) => {
       betTimer: null,
       challengeTimer: null,
       loading: false,
-      betsPublic() {
-        return Object.values(this.players).map(p => ({
-          id: p.id, name: p.name, bet: p.bet, hasAnswered: !!p.answer
-        }));
-      },
-      challengesPublic() {
-        return Object.values(this.players).map(p => ({
-          id: p.id, name: p.name, target: p.challengeTarget, amount: p.challengeAmount
-        })).filter(c => c.target);
-      }
+      messages: []
     };
 
     room.players[socket.id] = {
       id: socket.id, name: sanitize(name, 15) || 'لاعب',
       balance: START_BALANCE, eliminated: false,
       bet: 0, answer: '', correct: null,
-      challengeTarget: null, challengeAmount: 0, challengeAccepted: false,
-      isHost: true
+      challengeTarget: null, challengeAmount: 0,
+      betConfirmed: false, isHost: true
     };
 
     rooms.set(code, room);
@@ -432,8 +424,8 @@ io.on('connection', (socket) => {
       id: socket.id, name: sanitize(name, 15) || 'لاعب',
       balance: START_BALANCE, eliminated: false,
       bet: 0, answer: '', correct: null,
-      challengeTarget: null, challengeAmount: 0, challengeAccepted: false,
-      isHost: false
+      challengeTarget: null, challengeAmount: 0,
+      betConfirmed: false, isHost: false
     };
 
     socket.join(code);
@@ -503,7 +495,6 @@ io.on('connection', (socket) => {
     if (isNaN(amt) || amt < 0) return;
     if (amt > player.balance) amt = player.balance;
     if (amt > MAX_BET) amt = MAX_BET;
-    if (amt > 0 && amt < MIN_BET) amt = MIN_BET;
 
     player.bet = amt;
     broadcast(room);
@@ -515,14 +506,11 @@ io.on('connection', (socket) => {
     const player = room.players[socket.id];
     if (!player || player.eliminated) return;
     player.betConfirmed = true;
-    // check if all confirmed
+
     const active = Object.values(room.players).filter(p => !p.eliminated);
     if (active.every(p => p.betConfirmed)) {
       clearBetTimer(room);
       endBettingPhase(room);
-      // move to answering phase
-      room.phase = 'answering';
-      broadcast(room);
     } else {
       broadcast(room);
     }
@@ -536,7 +524,6 @@ io.on('connection', (socket) => {
     player.answer = sanitize(answer, 100);
     broadcast(room);
 
-    // if all answered
     const active = Object.values(room.players).filter(p => !p.eliminated);
     if (active.every(p => p.answer && p.answer.trim().length > 0)) {
       endAnsweringPhase(room);
@@ -555,7 +542,6 @@ io.on('connection', (socket) => {
     if (!room || room.phase !== 'challenge') return;
     const player = room.players[socket.id];
     if (!player || player.eliminated) return;
-    if (player.challengeTarget) return; // one challenge per round
 
     const target = room.players[targetId];
     if (!target || target.eliminated || targetId === socket.id) return;
@@ -586,6 +572,18 @@ io.on('connection', (socket) => {
     resolveScoring(room);
   });
 
+  socket.on('chat', ({ text }) => {
+    const room = rooms.get(socket.data.roomCode);
+    if (!room) return;
+    const player = room.players[socket.id];
+    if (!player) return;
+    const clean = String(text || '').trim().slice(0, 200);
+    if (!clean) return;
+    room.messages.push({ name: player.name, text: clean, ts: Date.now() });
+    if (room.messages.length > 100) room.messages = room.messages.slice(-100);
+    io.to(room.code).emit('chat-msg', room.messages[room.messages.length - 1]);
+  });
+
   socket.on('restart', () => {
     const room = rooms.get(socket.data.roomCode);
     if (!room || room.hostId !== socket.id) return;
@@ -600,6 +598,7 @@ io.on('connection', (socket) => {
     room.winner = null;
     room.questions = [];
     room.askedQuestions = [];
+    room.messages = [];
     Object.values(room.players).forEach(p => {
       p.balance = START_BALANCE;
       p.eliminated = false;
@@ -629,7 +628,7 @@ io.on('connection', (socket) => {
     if (room.hostId === socket.id) {
       room.hostId = Object.keys(room.players)[0];
     }
-    io.to(code).emit('room-update', publicRoom(room));
+    io.to(room.code).emit('room-update', publicRoom(room));
   });
 });
 
