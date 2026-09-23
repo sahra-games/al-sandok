@@ -12,6 +12,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const GROQ_KEY = process.env.GROQ_API_KEY;
+const SHOW_TIME = 15;
 const BET_TIME = 30;
 const CHALLENGE_TIME = 20;
 const START_BALANCE = 500;
@@ -25,6 +26,7 @@ const CATEGORIES = {
   anime: 'الأنمي'
 };
 
+/* ═══════════════════════════════════════════════════════════════ */
 async function generateQuestions(catIds, previous = []) {
   if (!GROQ_KEY) throw new Error('GROQ_API_KEY missing');
   const catList = catIds.map(c => CATEGORIES[c] || c).join('، ');
@@ -137,8 +139,7 @@ function sanitize(str, max = 30) {
 }
 
 function publicRoom(room) {
-  // ✅ السؤال بيظهر بس في المراحل اللي المفروض يبان فيها (مش في المراهنة)
-  const questionVisible = ['answering', 'challenge', 'scoring', 'reveal'].includes(room.phase);
+  const questionVisible = ['showing', 'betting', 'answering', 'challenge', 'scoring', 'reveal'].includes(room.phase);
 
   return {
     code: room.code,
@@ -161,6 +162,7 @@ function publicRoom(room) {
       .filter(p => p.challengeTarget)
       .map(p => ({ id: p.id, name: p.name, target: p.challengeTarget, amount: p.challengeAmount })),
     pot: room.currentPot,
+    showTimeLeft: room.showTimeLeft,
     betTimeLeft: room.betTimeLeft,
     challengeTimeLeft: room.challengeTimeLeft,
     lastRoundResults: room.lastRoundResults || null,
@@ -186,7 +188,8 @@ function beginRound(room) {
   room.askedQuestions.push(q.question);
 
   room.currentQuestion = q;
-  room.phase = 'betting';
+  room.phase = 'showing';
+  room.showTimeLeft = SHOW_TIME;
   room.betTimeLeft = BET_TIME;
   room.currentPot = 0;
   room.lastRoundResults = null;
@@ -200,6 +203,31 @@ function beginRound(room) {
     p.betConfirmed = false;
   });
 
+  broadcast(room);
+  startShowTimer(room);
+}
+
+function startShowTimer(room) {
+  clearShowTimer(room);
+  room.showTimer = setInterval(() => {
+    if (room.phase !== 'showing') { clearShowTimer(room); return; }
+    room.showTimeLeft--;
+    if (room.showTimeLeft <= 0) {
+      clearShowTimer(room);
+      endShowingPhase(room);
+    } else {
+      broadcast(room);
+    }
+  }, 1000);
+}
+
+function clearShowTimer(room) {
+  if (room.showTimer) { clearInterval(room.showTimer); room.showTimer = null; }
+}
+
+function endShowingPhase(room) {
+  room.phase = 'betting';
+  room.betTimeLeft = BET_TIME;
   broadcast(room);
   startBetTimer(room);
 }
@@ -232,7 +260,6 @@ function endBettingPhase(room) {
     .filter(p => !p.eliminated)
     .reduce((sum, p) => sum + p.bet, 0);
 
-  // deduct bets from balance temporarily (they'll be refunded if correct)
   Object.values(room.players).forEach(p => {
     if (p.eliminated) return;
     p.balance -= p.bet;
@@ -303,7 +330,6 @@ async function resolveScoring(room) {
     });
   }
 
-  // resolve challenges
   players.forEach(challenger => {
     if (!challenger.challengeTarget) return;
     const target = room.players[challenger.challengeTarget];
@@ -331,7 +357,6 @@ async function resolveScoring(room) {
     }))
   };
 
-  // check eliminations
   players.forEach(p => {
     if (p.balance <= 0) { p.balance = 0; p.eliminated = true; }
   });
@@ -391,8 +416,10 @@ io.on('connection', (socket) => {
       currentPot: 0,
       lastRoundResults: null,
       winner: null,
+      showTimeLeft: SHOW_TIME,
       betTimeLeft: BET_TIME,
       challengeTimeLeft: CHALLENGE_TIME,
+      showTimer: null,
       betTimer: null,
       challengeTimer: null,
       loading: false,
@@ -587,6 +614,7 @@ io.on('connection', (socket) => {
   socket.on('restart', () => {
     const room = rooms.get(socket.data.roomCode);
     if (!room || room.hostId !== socket.id) return;
+    clearShowTimer(room);
     clearBetTimer(room);
     clearChallengeTimer(room);
     room.status = 'lobby';
@@ -620,6 +648,7 @@ io.on('connection', (socket) => {
     delete room.players[socket.id];
 
     if (Object.keys(room.players).length === 0) {
+      clearShowTimer(room);
       clearBetTimer(room);
       clearChallengeTimer(room);
       rooms.delete(code);
