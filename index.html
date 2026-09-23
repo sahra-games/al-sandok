@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d0618">
+<title>🎰 الصندوق</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg-deep:#0a0412;--bg-purple:#1a0b2e;--violet:#C084FC;--gold:#FBBF24;--green:#22C55E;--red:#EF4444;--text:#F4F4F5;--muted:#A1A1AA;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
+html,body{width:100vw;height:100vh;height:100dvh;overflow:hidden;position:fixed;inset:0;font-family:'Cairo',sans-serif;color:var(--text);background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(139,92,246,0.18),transparent 60%),radial-gradient(ellipse 70% 50% at 50% 100%,rgba(236,72,153,0.12),transparent 60%),linear-gradient(180deg,var(--bg-deep) 0%,var(--bg-purple) 50%,var(--bg-deep) 100%);user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+.screen{position:absolute;inset:0;width:100%;height:100%;display:none;flex-direction:column;overflow:hidden;padding:calc(var(--safe-top) + 12px) 14px calc(var(--safe-bottom) + 12px)}
+.screen.active{display:flex}
+
+.btn{border:none;cursor:pointer;font-family:inherit;font-weight:900;color:#fff;transition:transform .12s ease,opacity .15s ease;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:16px;font-size:15px}
+.btn:active{transform:scale(0.97)}
+.btn:disabled{opacity:0.35;cursor:not-allowed}
+.btn-primary{background:linear-gradient(90deg,#F43F5E,#EC4899 55%,#8B5CF6);box-shadow:0 0 22px rgba(236,72,153,0.45)}
+.btn-ghost{background:rgba(255,255,255,0.04);border:1.5px solid rgba(196,132,252,0.35);color:#E9D5FF}
+.btn-success{background:linear-gradient(135deg,#22C55E,#15803D);box-shadow:0 0 20px rgba(34,197,94,0.5)}
+.btn-danger{background:linear-gradient(135deg,#EF4444,#991B1B);box-shadow:0 0 20px rgba(239,68,68,0.5)}
+.btn-gold{background:linear-gradient(135deg,#FBBF24,#D97706);box-shadow:0 0 22px rgba(251,191,36,0.5);color:#1a0b2e}
+
+.inp{width:100%;padding:16px 18px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.12);border-radius:16px;color:#fff;font-family:inherit;font-size:16px;font-weight:700;outline:none;text-align:center}
+.inp::placeholder{color:#52525B;font-weight:400}
+.inp:focus{border-color:rgba(196,132,252,0.7);box-shadow:0 0 0 3px rgba(139,92,246,0.18)}
+.inp-ltr{direction:ltr;letter-spacing:4px;font-weight:900;text-transform:uppercase;font-size:18px}
+
+/* ═══ Home ═══ */
+#screen-home{align-items:center;overflow-y:auto}
+.home-wrap{width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;margin:auto 0}
+.brand-title{font-size:clamp(38px,11vw,56px);font-weight:900;line-height:1.1;background:linear-gradient(90deg,#FB7185,#EC4899,#C084FC,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 18px rgba(236,72,153,0.5));text-align:center}
+.brand-sub{font-size:13px;font-weight:800;color:#A1A1AA;text-align:center;letter-spacing:1px;margin-top:-8px}
+.home-form{display:flex;flex-direction:column;gap:12px}
+.home-form .inp{background:rgba(255,255,255,0.03)}
+.divider{display:flex;align-items:center;justify-content:center;gap:10px;color:#52525B;font-size:13px;font-weight:900;margin:4px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(196,132,252,0.2),transparent)}
+.divider span{padding:0 4px}
+
+.rules-toggle-area{text-align:center;margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.rules-hint{font-size:12px;font-weight:800;color:#A1A1AA}
+.rules-arrow{font-size:20px;color:#52525B;line-height:1;animation:bounceArrow 1.5s ease-in-out infinite}
+@keyframes bounceArrow{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+.btn-rules{background:rgba(139,92,246,0.1);border:1.5px solid rgba(196,132,252,0.35);color:#E9D5FF;padding:12px 24px;border-radius:14px;font-family:inherit;font-weight:900;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-rules:active{transform:scale(0.97)}
+
+/* ═══ Rules Modal ═══ */
+.rules-overlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(5,2,12,0.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow-y:auto}
+.rules-overlay.show{display:flex !important}
+.rules-modal-box{width:100%;max-width:460px;background:linear-gradient(160deg,rgba(26,11,46,0.98),rgba(14,8,25,0.99));border:1.5px solid rgba(196,132,252,0.4);border-radius:22px;padding:22px;box-shadow:0 0 60px rgba(139,92,246,0.4);display:flex;flex-direction:column;gap:14px;max-height:calc(100dvh - 40px);overflow-y:auto}
+.rules-modal-title{font-size:20px;font-weight:900;text-align:center;background:linear-gradient(90deg,#FB7185,#C084FC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.rules-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.rules-list li{display:flex;align-items:flex-start;gap:10px;font-size:13px;font-weight:700;line-height:1.6;color:#D4D4D8;background:rgba(0,0,0,0.25);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.05)}
+.rules-list li .r-icon{font-size:18px;line-height:1.5;flex-shrink:0}
+.rules-list li strong{color:var(--gold)}
+.rules-close-btn{margin-top:6px;width:100%;padding:14px;border-radius:14px;background:linear-gradient(90deg,#8B5CF6,#EC4899);border:none;color:#fff;font-family:inherit;font-weight:900;font-size:15px;cursor:pointer}
+
+/* ═══ Lobby ═══ */
+#screen-lobby{gap:12px}
+.lobby-header{display:flex;justify-content:space-between;align-items:center;background:rgba(20,20,26,0.7);border:1px solid rgba(196,132,252,0.15);border-radius:14px;padding:10px 14px}
+.lobby-code-label{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--muted);margin-bottom:2px}
+.lobby-code{font-size:20px;font-weight:900;letter-spacing:4px;color:var(--gold);text-shadow:0 0 12px rgba(251,191,36,0.5);direction:ltr}
+.lobby-copy{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:10px;padding:6px 10px;font-family:inherit;font-weight:800;font-size:12px;cursor:pointer}
+
+.lobby-players{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.lobby-player-card{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px 14px}
+.lobby-player-card .crown{color:var(--gold);font-size:16px}
+.lobby-player-card .pname{font-size:14px;font-weight:900;flex:1}
+.lobby-player-card .me-badge{background:var(--gold);color:#1a0b2e;font-size:9px;font-weight:900;padding:2px 6px;border-radius:6px}
+.lobby-status{text-align:center;font-size:13px;font-weight:800;color:#A1A1AA;padding:10px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05)}
+.lobby-status.ok{color:#BBF7D0;border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.06)}
+.lobby-status.warn{color:#FDE68A;border-color:rgba(251,191,36,0.3);background:rgba(251,191,36,0.06)}
+
+/* ═══ Setup ═══ */
+#screen-setup{gap:12px;justify-content:center;align-items:center}
+.setup-card{width:100%;max-width:460px;background:linear-gradient(160deg,rgba(139,92,246,0.06),rgba(20,20,26,0.55));border:1px solid rgba(196,132,252,0.18);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.setup-title{font-size:18px;font-weight:900;text-align:center;color:#E9D5FF}
+.setup-sub{font-size:12px;font-weight:700;text-align:center;color:#A1A1AA;line-height:1.6}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cat-card{padding:14px 10px;border-radius:14px;background:rgba(255,255,255,0.03);border:2px solid rgba(255,255,255,0.08);cursor:pointer;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;font-family:inherit;color:#fff;transition:all .15s}
+.cat-card .cat-icon{font-size:28px}
+.cat-card .cat-name{font-size:13px;font-weight:900}
+.cat-card.selected{border-color:var(--gold);background:rgba(251,191,36,0.1);box-shadow:0 0 18px rgba(251,191,36,0.25)}
+.cat-card.selected .cat-name{color:#FDE68A}
+
+/* ═══ Game ═══ */
+#screen-game{padding:calc(var(--safe-top) + 6px) 8px calc(var(--safe-bottom) + 6px);gap:6px;overflow:hidden}
+.players-bar{display:grid;gap:5px;flex:0 0 auto}
+.players-bar.cols-2{grid-template-columns:repeat(2,1fr)}
+.players-bar.cols-3{grid-template-columns:repeat(3,1fr)}
+.players-bar.cols-4{grid-template-columns:repeat(4,1fr)}
+.player-chip{background:rgba(20,20,26,0.75);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:5px 6px;display:flex;flex-direction:column;gap:1px;align-items:center;min-width:0;position:relative;transition:all .2s}
+.player-chip .pname{font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.player-chip .pbal{font-size:13px;font-weight:900;color:var(--gold);display:flex;align-items:center;gap:2px}
+.player-chip .pbal .coin{font-size:10px}
+.player-chip.me{border-color:var(--gold);background:rgba(251,191,36,0.1);box-shadow:0 0 12px rgba(251,191,36,0.3)}
+.player-chip.eliminated{opacity:0.3;filter:grayscale(1)}
+.player-chip .dead-x{position:absolute;top:2px;right:4px;font-size:12px;color:var(--red)}
+.player-chip .bet-tag{font-size:9px;font-weight:900;color:#A5F3FC;background:rgba(6,182,212,0.2);padding:1px 5px;border-radius:5px}
+.player-chip .answered-tag{font-size:9px;font-weight:900;color:#BBF7D0;background:rgba(34,197,94,0.2);padding:1px 5px;border-radius:5px}
+
+.game-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+
+.phase-header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex:0 0 auto;padding:6px 10px;background:rgba(20,20,26,0.6);border-radius:12px;border:1px solid rgba(196,132,252,0.15)}
+.phase-title{font-size:13px;font-weight:900;color:#E9D5FF}
+.phase-timer{font-size:13px;font-weight:900;padding:4px 10px;border-radius:10px;background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.4);color:#A5F3FC;min-width:56px;text-align:center}
+.phase-timer.warn{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.55);color:#FCA5A5;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.pot-badge{font-size:14px;font-weight:900;padding:4px 12px;border-radius:10px;background:linear-gradient(135deg,#FBBF24,#D97706);color:#1a0b2e;display:flex;align-items:center;gap:4px}
+
+.q-display{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px 10px;background:linear-gradient(160deg,rgba(20,20,26,0.75),rgba(14,8,25,0.92));border:1.5px solid rgba(196,132,252,0.25);border-radius:14px;font-weight:900;line-height:1.5;overflow:hidden;word-wrap:break-word;font-size:clamp(14px,4.2vw,20px)}
+.q-category-tag{position:absolute;top:8px;right:8px;font-size:10px;font-weight:900;color:var(--violet);background:rgba(139,92,246,0.15);padding:3px 8px;border-radius:8px}
+.q-wrap{position:relative;flex:1;min-height:0;display:flex}
+
+/* Phase: betting */
+.bet-area{flex:0 0 auto;display:flex;flex-direction:column;gap:8px}
+.bet-quick{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.bet-q-btn{padding:10px 4px;border-radius:10px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(196,132,252,0.25);color:#fff;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;transition:all .15s}
+.bet-q-btn:active{transform:scale(0.95)}
+.bet-q-btn.selected{background:linear-gradient(135deg,#FBBF24,#D97706);border-color:transparent;color:#1a0b2e;box-shadow:0 0 16px rgba(251,191,36,0.5)}
+.bet-q-btn:disabled{opacity:0.3;cursor:not-allowed}
+.bet-slider-wrap{display:flex;flex-direction:column;gap:4px}
+.bet-slider{width:100%;-webkit-appearance:none;height:8px;border-radius:4px;background:rgba(255,255,255,0.08);outline:none}
+.bet-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#FBBF24,#D97706);cursor:pointer;box-shadow:0 0 12px rgba(251,191,36,0.6);border:2px solid #1a0b2e}
+.bet-slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#FBBF24,#D97706);cursor:pointer;border:2px solid #1a0b2e}
+.bet-display{text-align:center;font-size:22px;font-weight:900;color:var(--gold);text-shadow:0 0 12px rgba(251,191,36,0.5)}
+
+/* Phase: answering */
+.answer-area{flex:0 0 auto;display:flex;flex-direction:column;gap:8px}
+.answer-inp{width:100%;padding:14px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(196,132,252,0.35);border-radius:14px;color:#fff;font-family:inherit;font-size:16px;font-weight:800;outline:none;text-align:center}
+.answer-inp:focus{border-color:rgba(196,132,252,0.8);box-shadow:0 0 0 3px rgba(139,92,246,0.2)}
+.answer-done{text-align:center;padding:14px;border-radius:14px;background:rgba(34,197,94,0.1);border:1.5px solid rgba(34,197,94,0.4);color:#BBF7D0;font-weight:900;font-size:14px}
+
+/* Phase: challenge */
+.challenge-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.challenge-row{background:rgba(255,255,255,0.03);border:1.5px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.challenge-row .cname{font-size:13px;font-weight:900;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.challenge-row .cbet{font-size:13px;font-weight:900;color:var(--gold);white-space:nowrap}
+.challenge-row .cbtn{padding:6px 10px;font-size:11px;border-radius:8px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#FCA5A5;font-family:inherit;font-weight:900;cursor:pointer;white-space:nowrap}
+.challenge-row.mine{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.4)}
+.challenge-row.targeted{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.45)}
+
+/* Phase: reveal */
+.reveal-area{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.correct-answer-box{padding:12px;border-radius:14px;background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.04));border:1.5px solid rgba(34,197,94,0.4);text-align:center;flex:0 0 auto}
+.correct-answer-box .ca-label{font-size:10px;letter-spacing:2px;color:#86EFAC;font-weight:900;display:block;margin-bottom:4px}
+.correct-answer-box .ca-text{font-size:18px;font-weight:900;color:#BBF7D0}
+.result-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:12px;font-weight:800}
+.result-row.correct{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.06)}
+.result-row.wrong{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)}
+.result-row .rr-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-row .rr-ans{color:#A1A1AA;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%}
+.result-row .rr-gain{font-weight:900;white-space:nowrap}
+.result-row .rr-gain.pos{color:#86EFAC}
+.result-row .rr-gain.neg{color:#FCA5A5}
+.result-row .rr-gain.zero{color:#A1A1AA}
+
+/* Final */
+#screen-final{justify-content:center;align-items:center;gap:14px}
+.final-card{width:100%;max-width:440px;background:linear-gradient(160deg,rgba(139,92,246,0.08),rgba(20,20,26,0.7));border:1.5px solid rgba(196,132,252,0.3);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.final-trophy{font-size:64px;text-align:center;line-height:1;animation:bounce 1.6s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(3deg)}}
+.final-title{text-align:center;font-size:22px;font-weight:900;background:linear-gradient(90deg,#FB7185,#C084FC);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.final-winner{text-align:center;font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 0 14px rgba(251,191,36,0.5)}
+
+/* Chat */
+.chat-fab{position:fixed;bottom:calc(var(--safe-bottom) + 12px);right:12px;z-index:7500;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#8B5CF6,#EC4899);border:none;color:#fff;font-size:18px;cursor:pointer;box-shadow:0 6px 24px rgba(139,92,246,0.55);display:none;align-items:center;justify-content:center;opacity:0.92}
+body.in-game .chat-fab{display:flex}
+.chat-fab:active{transform:scale(0.92)}
+.chat-fab .chat-badge{position:absolute;top:-2px;left:-2px;background:var(--red);color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--bg-deep)}
+.chat-fab .chat-badge:empty{display:none}
+.chat-panel{position:fixed;bottom:calc(var(--safe-bottom) + 66px);left:12px;right:12px;max-width:360px;max-height:50vh;z-index:7501;background:rgba(20,20,26,0.97);border:1.5px solid rgba(196,132,252,0.3);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.6);animation:chatSlide .2s ease-out}
+.chat-panel.show{display:flex}
+@keyframes chatSlide{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.chat-header{padding:8px 12px;font-size:12px;font-weight:900;letter-spacing:1.5px;color:#A1A1AA;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.2)}
+.chat-close{background:none;border:none;color:#A1A1AA;font-size:20px;cursor:pointer;font-weight:900;line-height:1;padding:0 4px}
+.chat-msgs{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:5px;min-height:100px;max-height:35vh}
+.chat-msg{font-size:12px;font-weight:700;line-height:1.4;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.03);word-wrap:break-word}
+.chat-msg .cm-name{font-weight:900;margin-left:6px;color:#C084FC}
+.chat-form{display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,0.05)}
+.chat-input{flex:1;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#fff;font-family:inherit;font-size:13px;font-weight:700;outline:none}
+.chat-send{padding:10px 14px;border-radius:10px;background:linear-gradient(135deg,#8B5CF6,#EC4899);border:none;color:#fff;font-family:inherit;font-weight:900;font-size:12px;cursor:pointer}
+
+.toast{position:fixed;top:calc(var(--safe-top) + 12px);left:50%;transform:translateX(-50%);background:rgba(20,20,26,0.95);border:1.5px solid rgba(196,132,252,0.4);color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;font-weight:900;z-index:9500;opacity:0;transition:opacity .3s;pointer-events:none;backdrop-filter:blur(10px);max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.toast.success{border-color:rgba(34,197,94,0.6);color:#BBF7D0}
+.toast.error{border-color:rgba(239,68,68,0.6);color:#FCA5A5}
+.toast.gold{border-color:rgba(251,191,36,0.6);color:#FDE68A}
+
+.big-event{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9000;pointer-events:none;background:rgba(5,2,12,0.75);backdrop-filter:blur(6px);opacity:0;transition:opacity .3s}
+.big-event.show{display:flex;opacity:1}
+.big-event-box{padding:22px 28px;border-radius:20px;background:linear-gradient(160deg,rgba(26,11,46,0.96),rgba(14,8,25,0.98));border:2px solid rgba(251,191,36,0.5);text-align:center;box-shadow:0 0 60px rgba(251,191,36,0.3);max-width:90vw}
+.big-event-icon{font-size:42px;line-height:1;margin-bottom:6px}
+.big-event-text{font-size:18px;font-weight:900;color:#FDE68A}
+</style>
+</head>
+<body>
+
+<!-- ═══ Home ═══ -->
+<div id="screen-home" class="screen active">
+  <div class="home-wrap">
+    <div class="brand-title">🎰 الصندوق</div>
+    <div class="brand-sub">لعبة رهانات وذكاء</div>
+
+    <div class="home-form">
+      <input id="nameInput" class="inp" type="text" maxlength="12" placeholder="اسمك" autocomplete="off">
+      <button id="btnCreate" class="btn btn-primary" disabled type="button">🏠 إنشاء غرفة</button>
+
+      <div class="divider"><span>أو</span></div>
+
+      <input id="codeInput" class="inp inp-ltr" type="text" maxlength="6" placeholder="كود الغرفة (6 حروف)" autocomplete="off">
+      <button id="btnJoin" class="btn btn-ghost" disabled type="button">🔗 الانضمام لغرفة</button>
+    </div>
+
+    <div class="rules-toggle-area">
+      <div class="rules-hint">لمعرفة قواعد اللعبة، اضغط هنا</div>
+      <div class="rules-arrow">↓</div>
+      <button id="btnRules" class="btn-rules" type="button">📖 قواعد اللعبة</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Rules ═══ -->
+<div class="rules-overlay" id="rulesOverlay">
+  <div class="rules-modal-box">
+    <div class="rules-modal-title">📖 قواعد اللعبة</div>
+    <ul class="rules-list">
+      <li><span class="r-icon">🎯</span><div>كل لاعب يبدأ بـ <strong>500 نقطة</strong>. اللي يوصل <strong>صفر يخرج</strong> من اللعبة.</div></li>
+      <li><span class="r-icon">🎰</span><div>كل جولة سؤال. كل واحد <strong>يراهن بأي مبلغ</strong> من 50 لـ 500 (حسب رصيده).</div></li>
+      <li><span class="r-icon">💰</span><div>مجموع كل الرهانات = <strong>الصندوق</strong>. اللي يجاوب صح بياخد نصيبه من الصندوق بنسبة رهانه.</div></li>
+      <li><span class="r-icon">❌</span><div>اللي يجاوب غلط <strong>فلوسه تروح للصندوق</strong>.</div></li>
+      <li><span class="r-icon">⚔️</span><div>بعد المراهنات، تقدر <strong>تتحدى</strong> لاعب تاني — لو هو غلط يدفعلك، ولو صح تدفعله.</div></li>
+      <li><span class="r-icon">🧠</span><div>وقت الإجابة <strong>مفتوح</strong> — خد وقتك في التفكير.</div></li>
+      <li><span class="r-icon">⏱️</span><div>مؤقت للمراهنة (30 ث) ومؤقت للتحدي (20 ث).</div></li>
+      <li><span class="r-icon">🏆</span><div><strong>آخر واحد صامد</strong> = الفائز! لو حد وصل صفر يخرج.</div></li>
+      <li><span class="r-icon">👥</span><div>من <strong>2 لـ 8 لاعبين</strong>.</div></li>
+    </ul>
+    <button class="rules-close-btn" id="btnCloseRules" type="button">فهمت، اقفل ✓</button>
+  </div>
+</div>
+
+<!-- ═══ Lobby ═══ -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-header">
+    <div>
+      <div class="lobby-code-label">كود الغرفة</div>
+      <div class="lobby-code" id="lobbyCode">------</div>
+    </div>
+    <button class="lobby-copy" id="btnCopy" type="button">📋 نسخ</button>
+  </div>
+
+  <div class="lobby-players" id="lobbyPlayers"></div>
+
+  <div class="lobby-status" id="lobbyStatus">في انتظار اللاعبين...</div>
+
+  <button id="btnStartSetup" class="btn btn-gold" disabled type="button">⚙️ اختر الفئات</button>
+</div>
+
+<!-- ═══ Setup ═══ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-card">
+    <div class="setup-title">🎯 اختر الفئات</div>
+    <div class="setup-sub">اختر فئة واحدة أو أكثر (حتى 4)</div>
+    <div class="cat-grid" id="catGrid">
+      <button class="cat-card" data-cat="football" type="button"><span class="cat-icon">⚽</span><span class="cat-name">كرة القدم</span></button>
+      <button class="cat-card" data-cat="general_info" type="button"><span class="cat-icon">💡</span><span class="cat-name">معلومات عامة</span></button>
+      <button class="cat-card" data-cat="islamic" type="button"><span class="cat-icon">🕌</span><span class="cat-name">إسلاميات</span></button>
+      <button class="cat-card" data-cat="anime" type="button"><span class="cat-icon">🎌</span><span class="cat-name">الأنمي</span></button>
+    </div>
+    <button id="btnConfirmCats" class="btn btn-gold" disabled type="button">✅ ابدأ اللعبة</button>
+  </div>
+</div>
+
+<!-- ═══ Game ═══ -->
+<div id="screen-game" class="screen">
+  <div class="players-bar cols-2" id="playersBar"></div>
+
+  <div class="game-body" id="gameBody">
+    <!-- يتم بناء محتوى اللعبة ديناميكيًا -->
+  </div>
+</div>
+
+<!-- ═══ Chat ═══ -->
+<button class="chat-fab" id="chatFab" type="button" title="الشات">💬<span class="chat-badge" id="chatBadge"></span></button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <span>💬 الشات</span>
+    <button class="chat-close" id="chatClose" type="button">×</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <form class="chat-form" id="chatForm">
+    <input class="chat-input" id="chatInput" type="text" maxlength="200" placeholder="اكتب رسالتك..." autocomplete="off">
+    <button class="chat-send" type="submit">إرسال</button>
+  </form>
+</div>
+
+<!-- ═══ Final ═══ -->
+<div id="screen-final" class="screen">
+  <div class="final-card">
+    <div class="final-trophy">🏆</div>
+    <div class="final-title">الفايز</div>
+    <div class="final-winner" id="finalWinner">—</div>
+    <button id="btnRestart" class="btn btn-gold" type="button">🔄 لعبة جديدة</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="big-event" id="bigEvent">
+  <div class="big-event-box">
+    <div class="big-event-icon" id="beIcon">🎉</div>
+    <div class="big-event-text" id="beText">—</div>
+  </div>
+</div>
+
+<!-- Rules script -->
+<script>
+(function() {
+  var ro = document.getElementById('rulesOverlay');
+  var br = document.getElementById('btnRules');
+  var bc = document.getElementById('btnCloseRules');
+  if (br && ro) br.addEventListener('click', function() { ro.classList.add('show'); });
+  if (bc && ro) bc.addEventListener('click', function() { ro.classList.remove('show'); });
+  if (ro) ro.addEventListener('click', function(e) { if (e.target === ro) ro.classList.remove('show'); });
+})();
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+"use strict";
+
+const socket = io();
+const $ = (id) => document.getElementById(id);
+
+const state = {
+  me: null,
+  room: null,
+  myBet: 0,
+  betConfirmed: false,
+  myAnswer: '',
+  answerSubmitted: false,
+  myChallenge: null,
+  chatOpen: false,
+  unread: 0,
+  lastPhase: null
+};
+
+/* ═══ Helpers ═══ */
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('screen-' + name).classList.add('active');
+  document.body.classList.toggle('in-game', name === 'game');
+  if (name !== 'game') {
+    state.chatOpen = false;
+    $('chatPanel').classList.remove('show');
+  }
+}
+
+let toastTimer = null;
+function showToast(text, type = '') {
+  const t = $('toast');
+  t.textContent = text;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = 'toast ' + type, 2600);
+}
+
+let beTimer = null;
+function showBigEvent(icon, text) {
+  $('beIcon').textContent = icon;
+  $('beText').textContent = text;
+  $('bigEvent').classList.add('show');
+  clearTimeout(beTimer);
+  beTimer = setTimeout(() => $('bigEvent').classList.remove('show'), 2200);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+const CAT_ICONS = { 'كرة القدم': '⚽', 'معلومات عامة': '💡', 'إسلاميات': '🕌', 'الأنمي': '🎌' };
+function catIcon(name) { return CAT_ICONS[name] || '🎯'; }
+
+/* ═══ Home ═══ */
+const nameInput = $('nameInput');
+const codeInput = $('codeInput');
+const btnCreate = $('btnCreate');
+const btnJoin = $('btnJoin');
+
+function validateHome() {
+  const name = nameInput.value.trim();
+  const code = codeInput.value.trim().toUpperCase();
+  btnCreate.disabled = !name;
+  btnJoin.disabled = !(name && code.length === 6);
+}
+nameInput.addEventListener('input', validateHome);
+codeInput.addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  validateHome();
+});
+
+btnCreate.addEventListener('click', () => {
+  const name = nameInput.value.trim();
+  if (!name) return;
+  btnCreate.disabled = true;
+  btnCreate.textContent = '⏳ جاري الإنشاء...';
+  socket.emit('create-room', { name }, (res) => {
+    btnCreate.textContent = '🏠 إنشاء غرفة';
+    if (!res.ok) { showToast(res.error || 'فشل', 'error'); validateHome(); return; }
+    state.room = res.room;
+    state.me = findMe();
+    showScreen('lobby');
+    renderLobby();
+  });
+});
+
+btnJoin.addEventListener('click', () => {
+  const name = nameInput.value.trim();
+  const code = codeInput.value.trim().toUpperCase();
+  if (!name || code.length !== 6) return;
+  btnJoin.disabled = true;
+  btnJoin.textContent = '⏳ جاري الانضمام...';
+  socket.emit('join-room', { name, code }, (res) => {
+    btnJoin.textContent = '🔗 الانضمام لغرفة';
+    if (!res.ok) { showToast(res.error || 'فشل', 'error'); validateHome(); return; }
+    state.room = res.room;
+    state.me = findMe();
+    showScreen('lobby');
+    renderLobby();
+  });
+});
+
+/* ═══ Socket ═══ */
+socket.on('room-update', (room) => {
+  state.room = room;
+  state.me = findMe();
+
+  if (room.status === 'lobby') {
+    showScreen('lobby');
+    renderLobby();
+  } else if (room.status === 'setup') {
+    showScreen('setup');
+    renderSetup();
+  } else if (room.status === 'playing') {
+    renderGame();
+  } else if (room.status === 'ended') {
+    renderFinal();
+  }
+});
+
+socket.on('chat-msg', (msg) => {
+  appendChat(msg);
+  if (!state.chatOpen) { state.unread++; updateChatBadge(); }
+});
+
+socket.on('error-msg', (msg) => showToast(msg, 'error'));
+
+function findMe() {
+  if (!state.room) return null;
+  return state.room.players.find(p => p.id === socket.id) || null;
+}
+
+/* ═══ Lobby ═══ */
+$('btnCopy').addEventListener('click', () => {
+  if (!state.room) return;
+  navigator.clipboard.writeText(state.room.code).then(() => showToast('تم نسخ الكود ✓', 'success')).catch(() => showToast('فشل النسخ', 'error'));
+});
+
+$('btnStartSetup').addEventListener('click', () => socket.emit('start-setup'));
+
+function renderLobby() {
+  const room = state.room;
+  if (!room) return;
+  $('lobbyCode').textContent = room.code;
+
+  const container = $('lobbyPlayers');
+  container.innerHTML = '';
+  room.players.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'lobby-player-card';
+    const isHost = p.id === room.hostId;
+    const isMe = p.id === socket.id;
+    el.innerHTML = `
+      ${isHost ? '<span class="crown">👑</span>' : ''}
+      <span class="pname">${escapeHtml(p.name)}</span>
+      ${isMe ? '<span class="me-badge">أنت</span>' : ''}
+    `;
+    container.appendChild(el);
+  });
+
+  const total = room.players.length;
+  const isHost = state.me && state.me.id === room.hostId;
+  const status = $('lobbyStatus');
+  status.className = 'lobby-status';
+
+  if (total < 2) {
+    status.textContent = `⏳ محتاج لاعبين اتنين على الأقل (${total}/2)`;
+    $('btnStartSetup').disabled = true;
+  } else {
+    status.textContent = `✅ جاهزين! (${total} لاعبين)`;
+    status.classList.add('ok');
+    $('btnStartSetup').disabled = !isHost;
+  }
+}
+
+/* ═══ Setup ═══ */
+let selectedCats = new Set();
+
+document.querySelectorAll('.cat-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const cat = card.dataset.cat;
+    if (selectedCats.has(cat)) { selectedCats.delete(cat); card.classList.remove('selected'); }
+    else { selectedCats.add(cat); card.classList.add('selected'); }
+    $('btnConfirmCats').disabled = selectedCats.size < 1;
+  });
+});
+
+$('btnConfirmCats').addEventListener('click', () => {
+  if (selectedCats.size < 1) return;
+  socket.emit('set-categories', { categories: Array.from(selectedCats) });
+});
+
+function renderSetup() {
+  const room = state.room;
+  if (!room) return;
+  const isHost = state.me && state.me.id === room.hostId;
+  if (!isHost) {
+    $('btnConfirmCats').disabled = true;
+    $('btnConfirmCats').textContent = '⏳ في انتظار صاحب الغرفة...';
+  } else {
+    $('btnConfirmCats').textContent = '✅ ابدأ اللعبة';
+    $('btnConfirmCats').disabled = selectedCats.size < 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎮 Game — بناء ديناميكي للواجهة حسب الـ phase
+   ═══════════════════════════════════════════════════════════════ */
+function renderGame() {
+  const room = state.room;
+  if (!room) return;
+
+  if (!$('screen-game').classList.contains('active')) {
+    showScreen('game');
+    $('chatMsgs').innerHTML = '';
+    (room.messages || []).forEach(m => appendChat(m));
+  }
+
+  renderPlayersBar();
+
+  const phase = room.phase;
+  const phaseChanged = phase !== state.lastPhase;
+  state.lastPhase = phase;
+
+  // reset round-specific state
+  if (phaseChanged && (phase === 'betting' || phase === 'loading')) {
+    state.myBet = 0;
+    state.betConfirmed = false;
+    state.myAnswer = '';
+    state.answerSubmitted = false;
+    state.myChallenge = null;
+  }
+
+  const body = $('gameBody');
+  body.innerHTML = '';
+
+  if (phase === 'loading') {
+    body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px"><div class="waiting-spinner"></div><div style="font-size:14px;color:#A1A1AA;font-weight:800">جاري تحضير الأسئلة...</div></div>';
+    return;
+  }
+
+  if (phase === 'betting') renderBettingPhase(body);
+  else if (phase === 'answering') renderAnsweringPhase(body);
+  else if (phase === 'challenge') renderChallengePhase(body);
+  else if (phase === 'scoring') renderScoringPhase(body);
+  else if (phase === 'reveal') renderRevealPhase(body);
+}
+
+function renderPlayersBar() {
+  const room = state.room;
+  if (!room) return;
+  const bar = $('playersBar');
+  const n = room.players.length;
+  const cols = n <= 2 ? 2 : n <= 6 ? 3 : 4;
+  bar.className = 'players-bar cols-' + cols;
+
+  // keep order stable (host first, then join order)
+  const sorted = [...room.players].sort((a, b) => {
+    if (a.id === room.hostId) return -1;
+    if (b.id === room.hostId) return 1;
+    return 0;
+  });
+
+  bar.innerHTML = '';
+  sorted.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'player-chip';
+    if (p.id === socket.id) el.classList.add('me');
+    if (p.eliminated) el.classList.add('eliminated');
+
+    const bet = room.bets?.find(b => b.id === p.id)?.bet || 0;
+    const hasAnswered = room.bets?.find(b => b.id === p.id)?.hasAnswered || false;
+
+    let tagHtml = '';
+    if (room.phase === 'betting' && bet > 0) tagHtml = `<span class="bet-tag">${bet}🪙</span>`;
+    else if (room.phase === 'answering' && hasAnswered) tagHtml = `<span class="answered-tag">✓ إجاب</span>`;
+
+    el.innerHTML = `
+      ${p.eliminated ? '<span class="dead-x">✖</span>' : ''}
+      <span class="pname">${escapeHtml(p.name)}</span>
+      <span class="pbal"><span class="coin">🪙</span>${p.balance}</span>
+      ${tagHtml}
+    `;
+    bar.appendChild(el);
+  });
+}
+
+/* ═══ Phase: Betting ═══ */
+function renderBettingPhase(body) {
+  const room = state.room;
+  const me = state.me;
+  if (!me) return;
+
+  const header = document.createElement('div');
+  header.className = 'phase-header';
+  header.innerHTML = `
+    <div class="phase-title">💰 مرحلة المراهنة</div>
+    <div class="pot-badge">🎰 الصندوق: ${room.pot || 0}</div>
+    <div class="phase-timer" id="betTimer">⏱ ${room.betTimeLeft}</div>
+  `;
+  body.appendChild(header);
+
+  // question category hint
+  const qWrap = document.createElement('div');
+  qWrap.className = 'q-wrap';
+  const cat = room.currentQuestion?.category || '—';
+  qWrap.innerHTML = `<div class="q-display"><span class="q-category-tag">${cat}</span>الفئة: ${escapeHtml(cat)}<br><span style="font-size:12px;color:#A1A1AA;font-weight:700;margin-top:8px;display:block">هتراهن بكام؟</span></div>`;
+  body.appendChild(qWrap);
+
+  // bet area
+  const betArea = document.createElement('div');
+  betArea.className = 'bet-area';
+
+  const myBalance = me.balance;
+  const maxBet = Math.min(myBalance, 500);
+
+  // quick buttons
+  const quick = document.createElement('div');
+  quick.className = 'bet-quick';
+  [50, 100, 200, 300, 500].forEach(amt => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bet-q-btn';
+    b.textContent = amt;
+    if (state.myBet === amt) b.classList.add('selected');
+    if (amt > myBalance) b.disabled = true;
+    if (state.betConfirmed) b.disabled = true;
+    b.onclick = () => {
+      if (state.betConfirmed) return;
+      state.myBet = Math.min(amt, myBalance);
+      socket.emit('place-bet', { amount: state.myBet });
+      renderGame();
+    };
+    quick.appendChild(b);
+  });
+  betArea.appendChild(quick);
+
+  // bet display
+  const disp = document.createElement('div');
+  disp.className = 'bet-display';
+  disp.textContent = state.myBet + ' 🪙';
+  betArea.appendChild(disp);
+
+  // confirm button
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'btn btn-gold';
+  confirmBtn.style.width = '100%';
+  if (state.betConfirmed) {
+    confirmBtn.textContent = '✅ تم تأكيد الرهان';
+    confirmBtn.disabled = true;
+  } else {
+    confirmBtn.textContent = state.myBet > 0 ? `✅ تأكيد الرهان (${state.myBet} 🪙)` : '⏭️ العب بدون رهان';
+    confirmBtn.onclick = () => {
+      state.betConfirmed = true;
+      socket.emit('confirm-bet');
+      renderGame();
+    };
+  }
+  betArea.appendChild(confirmBtn);
+
+  body.appendChild(betArea);
+
+  // live update timer
+  const tEl = $('betTimer');
+  if (tEl) {
+    tEl.textContent = '⏱ ' + room.betTimeLeft;
+    if (room.betTimeLeft <= 5) tEl.classList.add('warn');
+  }
+}
+
+/* ═══ Phase: Answering ═══ */
+function renderAnsweringPhase(body) {
+  const room = state.room;
+  const me = state.me;
+  if (!me) return;
+
+  const header = document.createElement('div');
+  header.className = 'phase-header';
+  header.innerHTML = `
+    <div class="phase-title">✍️ جاوب دلوقتي</div>
+    <div class="pot-badge">🎰 ${room.pot || 0}</div>
+  `;
+  body.appendChild(header);
+
+  const qWrap = document.createElement('div');
+  qWrap.className = 'q-wrap';
+  const qText = room.currentQuestion?.question || '—';
+  qWrap.innerHTML = `<div class="q-display" id="qText">${escapeHtml(qText)}</div>`;
+  body.appendChild(qWrap);
+
+  const ansArea = document.createElement('div');
+  ansArea.className = 'answer-area';
+
+  if (state.answerSubmitted) {
+    const done = document.createElement('div');
+    done.className = 'answer-done';
+    done.innerHTML = `✅ إجابتك: <strong>${escapeHtml(state.myAnswer)}</strong><br><span style="font-size:11px;color:#A1A1AA;margin-top:6px;display:block">في انتظار باقي اللاعبين...</span>`;
+    ansArea.appendChild(done);
+  } else {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'answer-inp';
+    inp.placeholder = 'اكتب إجابتك هنا...';
+    inp.maxLength = 100;
+    inp.value = state.myAnswer;
+    inp.autocomplete = 'off';
+    inp.oninput = (e) => { state.myAnswer = e.target.value; submitBtn.disabled = !state.myAnswer.trim(); };
+    ansArea.appendChild(inp);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    submitBtn.className = 'btn btn-gold';
+    submitBtn.style.width = '100%';
+    submitBtn.textContent = '✅ ابعت الإجابة';
+    submitBtn.disabled = !state.myAnswer.trim();
+    submitBtn.onclick = () => {
+      if (!state.myAnswer.trim()) return;
+      state.answerSubmitted = true;
+      socket.emit('submit-answer', { answer: state.myAnswer.trim() });
+      renderGame();
+    };
+    ansArea.appendChild(submitBtn);
+
+    // auto focus
+    setTimeout(() => inp.focus(), 100);
+  }
+
+  body.appendChild(ansArea);
+
+  // host force-end button
+  if (room.hostId === socket.id) {
+    const forceBtn = document.createElement('button');
+    forceBtn.type = 'button';
+    forceBtn.className = 'btn btn-ghost';
+    forceBtn.style.cssText = 'margin-top:6px;font-size:12px;padding:8px';
+    forceBtn.textContent = '⏭️ تخطى للتحدي (لصاحب الغرفة)';
+    forceBtn.onclick = () => socket.emit('force-end-answering');
+    body.appendChild(forceBtn);
+  }
+
+  // fit question text
+  requestAnimationFrame(fitQuestionText);
+}
+
+function fitQuestionText() {
+  const el = $('qText');
+  if (!el) return;
+  const maxSize = Math.min(22, window.innerWidth * 0.055);
+  const minSize = 12;
+  let size = maxSize;
+  el.style.fontSize = size + 'px';
+  let attempts = 0;
+  while ((el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) && size > minSize && attempts < 30) {
+    size -= 1;
+    el.style.fontSize = size + 'px';
+    attempts++;
+  }
+}
+
+/* ═══ Phase: Challenge ═══ */
+function renderChallengePhase(body) {
+  const room = state.room;
+  const me = state.me;
+  if (!me) return;
+
+  const header = document.createElement('div');
+  header.className = 'phase-header';
+  header.innerHTML = `
+    <div class="phase-title">⚔️ مرحلة التحدي</div>
+    <div class="phase-timer" id="chTimer">⏱ ${room.challengeTimeLeft}</div>
+  `;
+  body.appendChild(header);
+
+  // hint
+  const hint = document.createElement('div');
+  hint.style.cssText = 'text-align:center;font-size:12px;color:#A1A1AA;font-weight:800;padding:4px';
+  hint.textContent = 'شايف رهانات الكل — مش شايف إجاباتهم. تقدر تتحدى حد شاكك فيه.';
+  body.appendChild(hint);
+
+  const list = document.createElement('div');
+  list.className = 'challenge-list';
+
+  const otherPlayers = room.players.filter(p => p.id !== socket.id && !p.eliminated);
+
+  otherPlayers.forEach(p => {
+    const theirBet = room.bets?.find(b => b.id === p.id)?.bet || 0;
+    const theirAnswered = room.bets?.find(b => b.id === p.id)?.hasAnswered || false;
+    const isTargetedByMe = state.myChallenge === p.id;
+    const isTargetedByOther = room.challenges?.some(c => c.target === p.id && c.id !== socket.id);
+
+    const row = document.createElement('div');
+    row.className = 'challenge-row';
+    if (isTargetedByMe) row.classList.add('mine');
+    if (isTargetedByOther) row.classList.add('targeted');
+
+    const info = `
+      <span class="cname">${escapeHtml(p.name)} ${theirAnswered ? '<span style="color:#86EFAC">✓</span>' : '<span style="color:#A1A1AA">...</span>'}</span>
+      <span class="cbet">راهن ${theirBet}🪙</span>
+    `;
+
+    if (isTargetedByMe) {
+      row.innerHTML = info + `<button class="cbtn" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.5);color:#FDE68A" onclick="window.cancelChallenge()">❌ إلغاء</button>`;
+    } else if (state.myChallenge) {
+      row.innerHTML = info + `<span style="font-size:10px;color:#A1A1AA">تحديت حد تاني</span>`;
+    } else {
+      row.innerHTML = info + `<button class="cbtn" onclick="window.challengePlayer('${p.id}')">⚔️ تحدى</button>`;
+    }
+    list.appendChild(row);
+  });
+
+  body.appendChild(list);
+
+  // if I have a challenge — show amount selector
+  if (state.myChallenge) {
+    const target = room.players.find(p => p.id === state.myChallenge);
+    const amountBox = document.createElement('div');
+    amountBox.className = 'bet-area';
+    amountBox.style.marginTop = '6px';
+
+    const label = document.createElement('div');
+    label.style.cssText = 'text-align:center;font-size:12px;color:#FDE68A;font-weight:900';
+    label.textContent = `أنت تتحدى ${target.name} — كام نقطة؟`;
+    amountBox.appendChild(label);
+
+    const quick = document.createElement('div');
+    quick.className = 'bet-quick';
+    [50, 100, 200, 300].forEach(amt => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bet-q-btn';
+      b.textContent = amt;
+      if (amt > me.balance) b.disabled = true;
+      b.onclick = () => {
+        window.challengePlayer(state.myChallenge, amt);
+      };
+      quick.appendChild(b);
+    });
+    amountBox.appendChild(quick);
+    body.appendChild(amountBox);
+  }
+
+  // host force button
+  if (room.hostId === socket.id) {
+    const forceBtn = document.createElement('button');
+    forceBtn.type = 'button';
+    forceBtn.className = 'btn btn-ghost';
+    forceBtn.style.cssText = 'margin-top:6px;font-size:12px;padding:8px';
+    forceBtn.textContent = '⏭️ اكشف النتائج (لصاحب الغرفة)';
+    forceBtn.onclick = () => socket.emit('force-end-challenge');
+    body.appendChild(forceBtn);
+  }
+
+  // timer update
+  const tEl = $('chTimer');
+  if (tEl) {
+    tEl.textContent = '⏱ ' + room.challengeTimeLeft;
+    if (room.challengeTimeLeft <= 5) tEl.classList.add('warn');
+  }
+}
+
+window.challengePlayer = function(targetId, amount) {
+  if (!amount) {
+    amount = 100;
+  }
+  state.myChallenge = targetId;
+  socket.emit('challenge', { targetId, amount });
+  renderGame();
+};
+
+window.cancelChallenge = function() {
+  state.myChallenge = null;
+  socket.emit('cancel-challenge');
+  renderGame();
+};
+
+/* ═══ Phase: Scoring ═══ */
+function renderScoringPhase(body) {
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px">
+      <div style="width:48px;height:48px;border-radius:50%;border:3px solid rgba(196,132,252,0.18);border-top-color:#C084FC;border-right-color:#EC4899;animation:spin 1s linear infinite"></div>
+      <div style="font-size:14px;color:#A1A1AA;font-weight:800">🧠 جاري تقييم الإجابات...</div>
+    </div>
+  `;
+}
+
+/* ═══ Phase: Reveal ═══ */
+function renderRevealPhase(body) {
+  const room = state.room;
+  const r = room.lastRoundResults;
+  if (!r) return;
+
+  const header = document.createElement('div');
+  header.className = 'phase-header';
+  header.innerHTML = `<div class="phase-title">📢 النتائج</div>`;
+  body.appendChild(header);
+
+  const area = document.createElement('div');
+  area.className = 'reveal-area';
+
+  const ca = document.createElement('div');
+  ca.className = 'correct-answer-box';
+  ca.innerHTML = `<span class="ca-label">الإجابة الصحيحة</span><span class="ca-text">${escapeHtml(r.correctAnswer)}</span>`;
+  area.appendChild(ca);
+
+  r.allAnswers.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'result-row ' + (a.correct ? 'correct' : 'wrong');
+    const gainText = a.correct && a.bet > 0 ? `+${a.bet}` : (a.bet > 0 ? `-${a.bet}` : '0');
+    const gainClass = a.correct ? 'pos' : (a.bet > 0 ? 'neg' : 'zero');
+    row.innerHTML = `
+      <span class="rr-name">${escapeHtml(a.name)}</span>
+      <span class="rr-ans">${escapeHtml(a.answer)}</span>
+      <span class="rr-gain ${gainClass}">${gainText}🪙</span>
+    `;
+    area.appendChild(row);
+  });
+
+  body.appendChild(area);
+}
+
+/* ═══ Final ═══ */
+function renderFinal() {
+  const room = state.room;
+  if (!room) return;
+  $('finalWinner').textContent = room.winner || '—';
+  showScreen('final');
+}
+
+$('btnRestart').addEventListener('click', () => {
+  socket.emit('restart');
+  selectedCats.clear();
+  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
+  $('btnConfirmCats').disabled = true;
+  state.myBet = 0;
+  state.betConfirmed = false;
+  state.myAnswer = '';
+  state.answerSubmitted = false;
+  state.myChallenge = null;
+  state.lastPhase = null;
+});
+
+/* ═══ Chat ═══ */
+$('chatFab').addEventListener('click', () => {
+  state.chatOpen = !state.chatOpen;
+  $('chatPanel').classList.toggle('show', state.chatOpen);
+  if (state.chatOpen) {
+    state.unread = 0;
+    updateChatBadge();
+    setTimeout(() => { const m = $('chatMsgs'); m.scrollTop = m.scrollHeight; $('chatInput').focus(); }, 100);
+  }
+});
+$('chatClose').addEventListener('click', () => { state.chatOpen = false; $('chatPanel').classList.remove('show'); });
+function updateChatBadge() { $('chatBadge').textContent = state.unread > 0 ? state.unread : ''; }
+function appendChat(msg) {
+  const c = $('chatMsgs');
+  if (!c) return;
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+  el.innerHTML = `<span class="cm-name">${escapeHtml(msg.name)}:</span>${escapeHtml(msg.text)}`;
+  c.appendChild(el);
+  c.scrollTop = c.scrollHeight;
+}
+$('chatForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const inp = $('chatInput');
+  const t = inp.value.trim();
+  if (!t) return;
+  socket.emit('chat', { text: t });
+  inp.value = '';
+});
+
+socket.on('connect', () => console.log('✅ متصل'));
+socket.on('disconnect', () => showToast('انقطع الاتصال', 'error'));
+
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+window.addEventListener('resize', () => requestAnimationFrame(fitQuestionText));
+</script>
+</body>
+</html>
